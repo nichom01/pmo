@@ -38,6 +38,24 @@ export type Cycle = {
   endDate: string;
 };
 
+export type Comment = {
+  id: string;
+  issueId: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+};
+
+export type Notification = {
+  id: string;
+  recipientId: string;
+  actorId: string | null;
+  issueId: string | null;
+  type: string;
+  readAt: string | null;
+  createdAt: string;
+};
+
 export async function health() {
   const response = await fetch(`${API_BASE_URL}/health`, { credentials: "include" });
   if (!response.ok) {
@@ -106,4 +124,26 @@ export async function assignIssueToCycle(issueId: string, cycleId: string) {
   });
   if (!response.ok) throw new Error("Failed to assign issue to cycle");
   return response.json() as Promise<Issue>;
+}
+
+export async function listComments(issueId: string) {
+  const response = await fetch(`${API_BASE_URL}/issues/${issueId}/comments`);
+  if (!response.ok) throw new Error("Failed to load comments");
+  return response.json() as Promise<Comment[]>;
+}
+
+export async function addComment(issueId: string, body: string) {
+  const response = await fetch(`${API_BASE_URL}/issues/${issueId}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Team-Role": "member" },
+    body: JSON.stringify({ body })
+  });
+  if (!response.ok) throw new Error("Failed to add comment");
+  return response.json() as Promise<Comment>;
+}
+
+export async function listNotifications() {
+  const response = await fetch(`${API_BASE_URL}/notifications`);
+  if (!response.ok) throw new Error("Failed to load notifications");
+  return response.json() as Promise<Notification[]>;
 }

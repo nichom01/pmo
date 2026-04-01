@@ -27,6 +27,8 @@ public class IssueService {
     private final UserRepository userRepository;
     private final CycleRepository cycleRepository;
     private final CursorService cursorService;
+    private final IssueActivityService issueActivityService;
+    private final NotificationService notificationService;
 
     public IssueService(
             IssueRepository issueRepository,
@@ -34,7 +36,9 @@ public class IssueService {
             WorkflowStateRepository workflowStateRepository,
             UserRepository userRepository,
             CycleRepository cycleRepository,
-            CursorService cursorService
+            CursorService cursorService,
+            IssueActivityService issueActivityService,
+            NotificationService notificationService
     ) {
         this.issueRepository = issueRepository;
         this.projectRepository = projectRepository;
@@ -42,6 +46,8 @@ public class IssueService {
         this.userRepository = userRepository;
         this.cycleRepository = cycleRepository;
         this.cursorService = cursorService;
+        this.issueActivityService = issueActivityService;
+        this.notificationService = notificationService;
     }
 
     public Issue create(UUID projectId, CreateIssueRequest request) {
@@ -64,7 +70,10 @@ public class IssueService {
         issue.setDescription(request.description());
         issue.setPriority(IssuePriority.none);
         issue.setSequenceNumber((int) issueRepository.countByProjectId(projectId) + 1);
-        return issueRepository.save(issue);
+        Issue saved = issueRepository.save(issue);
+        issueActivityService.record(saved, reporter, "title_changed", null, saved.getTitle());
+        notificationService.create(reporter, reporter, saved, "added_to_project");
+        return saved;
     }
 
     public PaginatedResponse<IssueResponse> list(UUID projectId, String cursor, int limit) {
@@ -108,6 +117,8 @@ public class IssueService {
             throw new NotFoundException("Cycle does not belong to issue project.");
         }
         issue.setCycle(cycle);
-        return issueRepository.save(issue);
+        Issue saved = issueRepository.save(issue);
+        issueActivityService.record(saved, issueActivityService.demoActor(), "cycle_changed", null, cycle.getId().toString());
+        return saved;
     }
 }

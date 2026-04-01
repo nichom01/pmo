@@ -1,6 +1,6 @@
 import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { assignIssueToCycle, createCycle, createIssue, demoContext, health, listCycles, listIssues } from "./api";
+import { addComment, assignIssueToCycle, createCycle, createIssue, demoContext, health, listComments, listCycles, listIssues, listNotifications } from "./api";
 
 function RootPage() {
   return <Navigate to="/acme/eng/issues" replace />;
@@ -15,11 +15,18 @@ function IssuesPage() {
     queryFn: () => listIssues(contextQuery.data!.projectId),
     enabled: !!contextQuery.data?.projectId
   });
+  const firstIssueId = issuesQuery.data?.data[0]?.id;
   const cyclesQuery = useQuery({
     queryKey: ["cycles", contextQuery.data?.projectId],
     queryFn: () => listCycles(contextQuery.data!.projectId),
     enabled: !!contextQuery.data?.projectId
   });
+  const commentsQuery = useQuery({
+    queryKey: ["comments", firstIssueId],
+    queryFn: () => listComments(firstIssueId!),
+    enabled: !!firstIssueId
+  });
+  const notificationsQuery = useQuery({ queryKey: ["notifications"], queryFn: listNotifications });
   const createIssueMutation = useMutation({
     mutationFn: async () => {
       const ctx = contextQuery.data;
@@ -47,6 +54,17 @@ function IssuesPage() {
       await queryClient.invalidateQueries({ queryKey: ["issues", contextQuery.data?.projectId] });
     }
   });
+  const addCommentMutation = useMutation({
+    mutationFn: async () => {
+      const issue = issuesQuery.data?.data[0];
+      if (!issue) throw new Error("Need issue");
+      return addComment(issue.id, `Comment ${Date.now()}`);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["comments", firstIssueId] });
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    }
+  });
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: 24 }}>
@@ -60,6 +78,9 @@ function IssuesPage() {
       <p data-testid="cycles-count">
         Cycles: {cyclesQuery.data ? cyclesQuery.data.length : 0}
       </p>
+      <p data-testid="notifications-count">
+        Notifications: {notificationsQuery.data ? notificationsQuery.data.length : 0}
+      </p>
       <button onClick={() => createIssueMutation.mutate()} disabled={!contextQuery.data?.workflowStateId}>
         Create Issue
       </button>
@@ -72,9 +93,18 @@ function IssuesPage() {
       >
         Assign First Issue To First Cycle
       </button>
+      <button onClick={() => addCommentMutation.mutate()} disabled={!issuesQuery.data?.data.length}>
+        Add Comment To First Issue
+      </button>
       <ul>
         {issuesQuery.data?.data.map((issue) => (
           <li key={issue.id}>#{issue.sequenceNumber} {issue.title} {issue.cycleId ? "(in cycle)" : ""}</li>
+        ))}
+      </ul>
+      <h3>First Issue Comments</h3>
+      <ul>
+        {commentsQuery.data?.map((comment) => (
+          <li key={comment.id}>{comment.body}</li>
         ))}
       </ul>
       <nav>

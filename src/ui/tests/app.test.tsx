@@ -38,6 +38,18 @@ vi.stubGlobal(
         json: async () => [{ id: "c1", projectId: "project-1", name: "Cycle 1", description: null, status: "draft", startDate: "2026-01-01", endDate: "2026-01-08" }]
       };
     }
+    if (url.includes("/issues/i1/comments")) {
+      return {
+        ok: true,
+        json: async () => [{ id: "cm1", issueId: "i1", authorId: "u1", body: "Comment 1", createdAt: "2026-01-01T00:00:00Z" }]
+      };
+    }
+    if (url.includes("/notifications")) {
+      return {
+        ok: true,
+        json: async () => [{ id: "n1", recipientId: "u1", actorId: "u1", issueId: "i1", type: "issue_commented", readAt: null, createdAt: "2026-01-01T00:00:00Z" }]
+      };
+    }
     return { ok: true, json: async () => ({}) };
   }) as unknown as typeof fetch
 );
@@ -61,6 +73,10 @@ describe("App", () => {
     const cycles = await screen.findByTestId("cycles-count");
     await waitFor(() => {
       expect(cycles.textContent).toContain("Cycles: 1");
+    });
+    const notifications = await screen.findByTestId("notifications-count");
+    await waitFor(() => {
+      expect(notifications.textContent).toContain("Notifications: 1");
     });
   });
 });
