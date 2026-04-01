@@ -20,3 +20,4 @@
 - 23:26:20 BST - Implemented notification preferences foundation: `NotificationPreference` entity, repository, service, DTOs, and endpoints (`/users/me/notification-preferences` GET/PATCH).
 - 23:26:20 BST - Extended UI with notification preference count and upsert action; expanded unit and e2e flow coverage.
 - 23:26:20 BST - Validation run complete: backend tests passed (`--max-workers=1` for stability), frontend unit tests passed, e2e passed.
+- 23:28:43 BST - Added `docs/development-workflow.md` to formally document the required delivery loop (implement -> validate -> log -> commit -> push -> continue).
