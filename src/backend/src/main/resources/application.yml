@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pmo}
+    username: ${SPRING_DATASOURCE_USERNAME:pmo}
+    password: ${SPRING_DATASOURCE_PASSWORD:pmo}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:local-dev-secret}

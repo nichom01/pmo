@@ -1,0 +1,13 @@
+.DS_Store
+.env
+node_modules/
+dist/
+build/
+.gradle/
+out/
+target/
+playwright-report/
+test-results/
+src/ui/.vite/
+src/ui/test-results/
+src/ui/playwright-report/
