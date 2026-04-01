@@ -1,6 +1,6 @@
 import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addAttachment, addComment, assignIssueToCycle, createCycle, createIssue, demoContext, health, listAttachments, listComments, listCycles, listIssues, listNotifications } from "./api";
+import { addAttachment, addComment, assignIssueToCycle, createApiKey, createCycle, createIssue, demoContext, health, listApiKeys, listAttachments, listComments, listCycles, listIssues, listNotifications } from "./api";
 
 function RootPage() {
   return <Navigate to="/acme/eng/issues" replace />;
@@ -32,6 +32,7 @@ function IssuesPage() {
     enabled: !!firstIssueId
   });
   const notificationsQuery = useQuery({ queryKey: ["notifications"], queryFn: listNotifications });
+  const apiKeysQuery = useQuery({ queryKey: ["api-keys"], queryFn: listApiKeys });
   const createIssueMutation = useMutation({
     mutationFn: async () => {
       const ctx = contextQuery.data;
@@ -80,6 +81,12 @@ function IssuesPage() {
       await queryClient.invalidateQueries({ queryKey: ["attachments"] });
     }
   });
+  const createApiKeyMutation = useMutation({
+    mutationFn: async () => createApiKey(`local-${Date.now()}`),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+    }
+  });
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: 24 }}>
@@ -95,6 +102,9 @@ function IssuesPage() {
       </p>
       <p data-testid="notifications-count">
         Notifications: {notificationsQuery.data ? notificationsQuery.data.length : 0}
+      </p>
+      <p data-testid="api-keys-count">
+        API Keys: {apiKeysQuery.data ? apiKeysQuery.data.length : 0}
       </p>
       <button onClick={() => createIssueMutation.mutate()} disabled={!contextQuery.data?.workflowStateId}>
         Create Issue
@@ -113,6 +123,9 @@ function IssuesPage() {
       </button>
       <button onClick={() => addAttachmentMutation.mutate()} disabled={!issuesQuery.data?.data.length}>
         Add Attachment To First Issue
+      </button>
+      <button onClick={() => createApiKeyMutation.mutate()}>
+        Create API Key
       </button>
       <ul>
         {issuesQuery.data?.data.map((issue) => (

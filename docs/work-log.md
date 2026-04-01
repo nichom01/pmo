@@ -12,3 +12,7 @@
 - 23:14:41 BST - Added storage abstraction with `StorageService`, `LocalStorageServiceImpl` (`dev` profile), and `S3StorageServiceImpl` placeholder (`prod` profile).
 - 23:14:41 BST - Wired UI attachment actions/listing on issues page and added attachment integration test coverage in backend.
 - 23:14:41 BST - Validation run complete: backend tests passed, frontend unit tests passed, e2e passed.
+- 23:15:11 BST - Committed and pushed slice to `main` (`f44d214`). Starting next slice: API key management foundation.
+- 23:19:17 BST - Implemented API key management foundation: `ApiKey` entity, repository, service, DTOs, and endpoints (`/users/me/api-keys` GET/POST/DELETE).
+- 23:19:17 BST - Updated UI with API key listing count and create action; expanded client APIs and unit/e2e flow coverage.
+- 23:19:17 BST - Validation run complete: backend tests passed, frontend unit tests passed, e2e passed.

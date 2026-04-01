@@ -56,6 +56,12 @@ vi.stubGlobal(
         json: async () => [{ id: "a1", issueId: "i1", uploaderId: "u1", filename: "note.txt", fileUrl: "storage/note.txt", fileSize: 10, mimeType: "text/plain" }]
       };
     }
+    if (url.includes("/users/me/api-keys")) {
+      return {
+        ok: true,
+        json: async () => [{ id: "k1", userId: "u1", label: "local", createdAt: "2026-01-01T00:00:00Z" }]
+      };
+    }
     return { ok: true, json: async () => ({}) };
   }) as unknown as typeof fetch
 );
@@ -83,6 +89,10 @@ describe("App", () => {
     const notifications = await screen.findByTestId("notifications-count");
     await waitFor(() => {
       expect(notifications.textContent).toContain("Notifications: 1");
+    });
+    const apiKeys = await screen.findByTestId("api-keys-count");
+    await waitFor(() => {
+      expect(apiKeys.textContent).toContain("API Keys: 1");
     });
   });
 });

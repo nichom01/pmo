@@ -66,6 +66,13 @@ export type Attachment = {
   mimeType: string;
 };
 
+export type ApiKey = {
+  id: string;
+  userId: string;
+  label: string;
+  createdAt: string;
+};
+
 export async function health() {
   const response = await fetch(`${API_BASE_URL}/health`, { credentials: "include" });
   if (!response.ok) {
@@ -172,4 +179,20 @@ export async function addAttachment(issueId: string, filename: string, content: 
   });
   if (!response.ok) throw new Error("Failed to add attachment");
   return response.json() as Promise<Attachment>;
+}
+
+export async function listApiKeys() {
+  const response = await fetch(`${API_BASE_URL}/users/me/api-keys`);
+  if (!response.ok) throw new Error("Failed to load API keys");
+  return response.json() as Promise<ApiKey[]>;
+}
+
+export async function createApiKey(label: string) {
+  const response = await fetch(`${API_BASE_URL}/users/me/api-keys`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ label })
+  });
+  if (!response.ok) throw new Error("Failed to create API key");
+  return response.json() as Promise<{ apiKey: ApiKey; rawKey: string }>;
 }
