@@ -62,6 +62,12 @@ vi.stubGlobal(
         json: async () => [{ id: "k1", userId: "u1", label: "local", createdAt: "2026-01-01T00:00:00Z" }]
       };
     }
+    if (url.includes("/users/me/notification-preferences")) {
+      return {
+        ok: true,
+        json: async () => [{ id: "p1", userId: "u1", organisationId: "o1", eventType: "issue_commented", channel: "in_app", enabled: true }]
+      };
+    }
     return { ok: true, json: async () => ({}) };
   }) as unknown as typeof fetch
 );
@@ -93,6 +99,10 @@ describe("App", () => {
     const apiKeys = await screen.findByTestId("api-keys-count");
     await waitFor(() => {
       expect(apiKeys.textContent).toContain("API Keys: 1");
+    });
+    const prefs = await screen.findByTestId("notification-prefs-count");
+    await waitFor(() => {
+      expect(prefs.textContent).toContain("Notification Prefs: 1");
     });
   });
 });

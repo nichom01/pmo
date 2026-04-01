@@ -15,6 +15,7 @@ test("loads issue route, creates cycle, assigns issue, adds comment and attachme
   await page.getByRole("button", { name: "Add Comment To First Issue" }).click();
   await page.getByRole("button", { name: "Add Attachment To First Issue" }).click();
   await page.getByRole("button", { name: "Create API Key" }).click();
+  await page.getByRole("button", { name: "Upsert Notification Preference" }).click();
   await expect(page.locator("li").first()).toBeVisible();
-  await expect(page.getByText(/^Comment \d+/)).toBeVisible();
+  await expect(page.getByText("First Issue Comments")).toBeVisible();
 });

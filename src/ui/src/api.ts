@@ -73,6 +73,15 @@ export type ApiKey = {
   createdAt: string;
 };
 
+export type NotificationPreference = {
+  id: string;
+  userId: string;
+  organisationId: string;
+  eventType: string;
+  channel: string;
+  enabled: boolean;
+};
+
 export async function health() {
   const response = await fetch(`${API_BASE_URL}/health`, { credentials: "include" });
   if (!response.ok) {
@@ -195,4 +204,20 @@ export async function createApiKey(label: string) {
   });
   if (!response.ok) throw new Error("Failed to create API key");
   return response.json() as Promise<{ apiKey: ApiKey; rawKey: string }>;
+}
+
+export async function listNotificationPreferences() {
+  const response = await fetch(`${API_BASE_URL}/users/me/notification-preferences`);
+  if (!response.ok) throw new Error("Failed to load notification preferences");
+  return response.json() as Promise<NotificationPreference[]>;
+}
+
+export async function upsertNotificationPreference(eventType: string, channel: string, enabled: boolean) {
+  const response = await fetch(`${API_BASE_URL}/users/me/notification-preferences`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ eventType, channel, enabled })
+  });
+  if (!response.ok) throw new Error("Failed to update notification preference");
+  return response.json() as Promise<NotificationPreference>;
 }

@@ -1,6 +1,6 @@
 import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addAttachment, addComment, assignIssueToCycle, createApiKey, createCycle, createIssue, demoContext, health, listApiKeys, listAttachments, listComments, listCycles, listIssues, listNotifications } from "./api";
+import { addAttachment, addComment, assignIssueToCycle, createApiKey, createCycle, createIssue, demoContext, health, listApiKeys, listAttachments, listComments, listCycles, listIssues, listNotificationPreferences, listNotifications, upsertNotificationPreference } from "./api";
 
 function RootPage() {
   return <Navigate to="/acme/eng/issues" replace />;
@@ -33,6 +33,10 @@ function IssuesPage() {
   });
   const notificationsQuery = useQuery({ queryKey: ["notifications"], queryFn: listNotifications });
   const apiKeysQuery = useQuery({ queryKey: ["api-keys"], queryFn: listApiKeys });
+  const notificationPrefsQuery = useQuery({
+    queryKey: ["notification-preferences"],
+    queryFn: listNotificationPreferences
+  });
   const createIssueMutation = useMutation({
     mutationFn: async () => {
       const ctx = contextQuery.data;
@@ -87,6 +91,12 @@ function IssuesPage() {
       await queryClient.invalidateQueries({ queryKey: ["api-keys"] });
     }
   });
+  const upsertPreferenceMutation = useMutation({
+    mutationFn: async () => upsertNotificationPreference("issue_commented", "in_app", true),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
+    }
+  });
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: 24 }}>
@@ -105,6 +115,9 @@ function IssuesPage() {
       </p>
       <p data-testid="api-keys-count">
         API Keys: {apiKeysQuery.data ? apiKeysQuery.data.length : 0}
+      </p>
+      <p data-testid="notification-prefs-count">
+        Notification Prefs: {notificationPrefsQuery.data ? notificationPrefsQuery.data.length : 0}
       </p>
       <button onClick={() => createIssueMutation.mutate()} disabled={!contextQuery.data?.workflowStateId}>
         Create Issue
@@ -126,6 +139,9 @@ function IssuesPage() {
       </button>
       <button onClick={() => createApiKeyMutation.mutate()}>
         Create API Key
+      </button>
+      <button onClick={() => upsertPreferenceMutation.mutate()}>
+        Upsert Notification Preference
       </button>
       <ul>
         {issuesQuery.data?.data.map((issue) => (

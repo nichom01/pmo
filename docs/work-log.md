@@ -16,3 +16,7 @@
 - 23:19:17 BST - Implemented API key management foundation: `ApiKey` entity, repository, service, DTOs, and endpoints (`/users/me/api-keys` GET/POST/DELETE).
 - 23:19:17 BST - Updated UI with API key listing count and create action; expanded client APIs and unit/e2e flow coverage.
 - 23:19:17 BST - Validation run complete: backend tests passed, frontend unit tests passed, e2e passed.
+- 23:19:51 BST - Committed and pushed slice to `main` (`462b2c2`). Starting next slice: notification preferences endpoints and UI integration.
+- 23:26:20 BST - Implemented notification preferences foundation: `NotificationPreference` entity, repository, service, DTOs, and endpoints (`/users/me/notification-preferences` GET/PATCH).
+- 23:26:20 BST - Extended UI with notification preference count and upsert action; expanded unit and e2e flow coverage.
+- 23:26:20 BST - Validation run complete: backend tests passed (`--max-workers=1` for stability), frontend unit tests passed, e2e passed.
