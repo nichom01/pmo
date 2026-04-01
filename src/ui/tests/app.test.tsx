@@ -50,6 +50,12 @@ vi.stubGlobal(
         json: async () => [{ id: "n1", recipientId: "u1", actorId: "u1", issueId: "i1", type: "issue_commented", readAt: null, createdAt: "2026-01-01T00:00:00Z" }]
       };
     }
+    if (url.includes("/issues/i1/attachments")) {
+      return {
+        ok: true,
+        json: async () => [{ id: "a1", issueId: "i1", uploaderId: "u1", filename: "note.txt", fileUrl: "storage/note.txt", fileSize: 10, mimeType: "text/plain" }]
+      };
+    }
     return { ok: true, json: async () => ({}) };
   }) as unknown as typeof fetch
 );

@@ -1,6 +1,6 @@
 import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addComment, assignIssueToCycle, createCycle, createIssue, demoContext, health, listComments, listCycles, listIssues, listNotifications } from "./api";
+import { addAttachment, addComment, assignIssueToCycle, createCycle, createIssue, demoContext, health, listAttachments, listComments, listCycles, listIssues, listNotifications } from "./api";
 
 function RootPage() {
   return <Navigate to="/acme/eng/issues" replace />;
@@ -24,6 +24,11 @@ function IssuesPage() {
   const commentsQuery = useQuery({
     queryKey: ["comments", firstIssueId],
     queryFn: () => listComments(firstIssueId!),
+    enabled: !!firstIssueId
+  });
+  const attachmentsQuery = useQuery({
+    queryKey: ["attachments", firstIssueId],
+    queryFn: () => listAttachments(firstIssueId!),
     enabled: !!firstIssueId
   });
   const notificationsQuery = useQuery({ queryKey: ["notifications"], queryFn: listNotifications });
@@ -65,6 +70,16 @@ function IssuesPage() {
       await queryClient.invalidateQueries({ queryKey: ["notifications"] });
     }
   });
+  const addAttachmentMutation = useMutation({
+    mutationFn: async () => {
+      const issue = issuesQuery.data?.data[0];
+      if (!issue) throw new Error("Need issue");
+      return addAttachment(issue.id, `note-${Date.now()}.txt`, `Attachment ${Date.now()}`);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["attachments"] });
+    }
+  });
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: 24 }}>
@@ -96,6 +111,9 @@ function IssuesPage() {
       <button onClick={() => addCommentMutation.mutate()} disabled={!issuesQuery.data?.data.length}>
         Add Comment To First Issue
       </button>
+      <button onClick={() => addAttachmentMutation.mutate()} disabled={!issuesQuery.data?.data.length}>
+        Add Attachment To First Issue
+      </button>
       <ul>
         {issuesQuery.data?.data.map((issue) => (
           <li key={issue.id}>#{issue.sequenceNumber} {issue.title} {issue.cycleId ? "(in cycle)" : ""}</li>
@@ -105,6 +123,12 @@ function IssuesPage() {
       <ul>
         {commentsQuery.data?.map((comment) => (
           <li key={comment.id}>{comment.body}</li>
+        ))}
+      </ul>
+      <h3>First Issue Attachments</h3>
+      <ul>
+        {attachmentsQuery.data?.map((attachment) => (
+          <li key={attachment.id} data-testid="attachment-item">{attachment.filename}</li>
         ))}
       </ul>
       <nav>

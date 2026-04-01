@@ -56,6 +56,16 @@ export type Notification = {
   createdAt: string;
 };
 
+export type Attachment = {
+  id: string;
+  issueId: string;
+  uploaderId: string;
+  filename: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+};
+
 export async function health() {
   const response = await fetch(`${API_BASE_URL}/health`, { credentials: "include" });
   if (!response.ok) {
@@ -146,4 +156,20 @@ export async function listNotifications() {
   const response = await fetch(`${API_BASE_URL}/notifications`);
   if (!response.ok) throw new Error("Failed to load notifications");
   return response.json() as Promise<Notification[]>;
+}
+
+export async function listAttachments(issueId: string) {
+  const response = await fetch(`${API_BASE_URL}/issues/${issueId}/attachments`);
+  if (!response.ok) throw new Error("Failed to load attachments");
+  return response.json() as Promise<Attachment[]>;
+}
+
+export async function addAttachment(issueId: string, filename: string, content: string) {
+  const response = await fetch(`${API_BASE_URL}/issues/${issueId}/attachments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Team-Role": "member" },
+    body: JSON.stringify({ filename, content, mimeType: "text/plain" })
+  });
+  if (!response.ok) throw new Error("Failed to add attachment");
+  return response.json() as Promise<Attachment>;
 }
