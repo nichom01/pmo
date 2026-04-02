@@ -124,23 +124,7 @@ class ProjectIssueCycleCRUDIntegrationTest {
         assertThat(updatedProject.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(updatedProject.getBody().get("name")).isEqualTo("PMO Core Updated");
 
-        ResponseEntity<Void> deletedProject = restTemplate.exchange(
-                "/api/v1/projects/" + projectId,
-                HttpMethod.DELETE,
-                new HttpEntity<>(headers),
-                Void.class
-        );
-        assertThat(deletedProject.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        ResponseEntity<Map<String, Object>> projectAfterDelete = restTemplate.exchange(
-                "/api/v1/projects/" + projectId,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<Map<String, Object>>() {}
-        );
-        assertThat(projectAfterDelete.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-
-        // Cycle: create + get detail
+        // Cycle: create + get detail (must happen before project soft delete)
         Map<String, Object> createCyclePayload = new HashMap<>();
         createCyclePayload.put("name", "Cycle 1");
         createCyclePayload.put("description", null);
@@ -163,6 +147,22 @@ class ProjectIssueCycleCRUDIntegrationTest {
         );
         assertThat(cycle.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(cycle.getBody().get("status")).isEqualTo("draft");
+
+        ResponseEntity<Void> deletedProject = restTemplate.exchange(
+                "/api/v1/projects/" + projectId,
+                HttpMethod.DELETE,
+                new HttpEntity<>(headers),
+                Void.class
+        );
+        assertThat(deletedProject.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<Map<String, Object>> projectAfterDelete = restTemplate.exchange(
+                "/api/v1/projects/" + projectId,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<Map<String, Object>>() {}
+        );
+        assertThat(projectAfterDelete.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }
 
