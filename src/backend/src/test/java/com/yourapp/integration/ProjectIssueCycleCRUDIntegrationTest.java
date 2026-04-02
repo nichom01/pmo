@@ -12,6 +12,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -140,15 +141,15 @@ class ProjectIssueCycleCRUDIntegrationTest {
         assertThat(projectAfterDelete.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
         // Cycle: create + get detail
+        Map<String, Object> createCyclePayload = new HashMap<>();
+        createCyclePayload.put("name", "Cycle 1");
+        createCyclePayload.put("description", null);
+        createCyclePayload.put("startDate", "2026-01-01");
+        createCyclePayload.put("endDate", "2026-01-08");
         ResponseEntity<Map<String, Object>> createdCycle = restTemplate.exchange(
                 "/api/v1/projects/" + projectId + "/cycles",
                 HttpMethod.POST,
-                new HttpEntity<>(Map.of(
-                        "name", "Cycle 1",
-                        "description", null,
-                        "startDate", "2026-01-01",
-                        "endDate", "2026-01-08"
-                ), headers),
+                new HttpEntity<>(createCyclePayload, headers),
                 new ParameterizedTypeReference<Map<String, Object>>() {}
         );
         assertThat(createdCycle.getStatusCode()).isEqualTo(HttpStatus.OK);
