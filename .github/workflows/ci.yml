@@ -34,11 +34,47 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: pmo
+          POSTGRES_USER: pmo
+          POSTGRES_PASSWORD: pmo
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pmo -d pmo"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Start backend
+        working-directory: src/backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/pmo
+          SPRING_DATASOURCE_USERNAME: pmo
+          SPRING_DATASOURCE_PASSWORD: pmo
+          APP_JWT_SECRET: ci-secret
+        run: |
+          gradle bootRun --no-daemon &
+          for i in {1..60}; do
+            if curl -fsS "http://localhost:8080/api/v1/health" >/dev/null; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend did not become healthy in time"
+          exit 1
       - name: Install deps
         working-directory: src/ui
         run: npm install
@@ -50,4 +86,6 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: E2E tests
         working-directory: src/ui
+        env:
+          VITE_API_BASE_URL: http://localhost:8080/api/v1
         run: npm run test:e2e
