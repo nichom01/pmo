@@ -43,29 +43,21 @@ public class DemoDataConfig {
             });
 
             // Seed demo memberships so org/team listing endpoints return data.
-            organisationMembershipRepository.findByOrganisationId(org.getId())
-                    .stream()
-                    .filter(m -> m.getUser().getId().equals(user.getId()))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        OrganisationMembership m = new OrganisationMembership();
-                        m.setOrganisation(org);
-                        m.setUser(user);
-                        m.setRole("admin");
-                        return organisationMembershipRepository.save(m);
-                    });
+            if (!organisationMembershipRepository.existsByOrganisationIdAndUserId(org.getId(), user.getId())) {
+                OrganisationMembership m = new OrganisationMembership();
+                m.setOrganisation(org);
+                m.setUser(user);
+                m.setRole("admin");
+                organisationMembershipRepository.save(m);
+            }
 
-            teamMembershipRepository.findByTeamId(team.getId())
-                    .stream()
-                    .filter(m -> m.getUser().getId().equals(user.getId()))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        TeamMembership m = new TeamMembership();
-                        m.setTeam(team);
-                        m.setUser(user);
-                        m.setRole("owner");
-                        return teamMembershipRepository.save(m);
-                    });
+            if (!teamMembershipRepository.existsByTeamIdAndUserId(team.getId(), user.getId())) {
+                TeamMembership m = new TeamMembership();
+                m.setTeam(team);
+                m.setUser(user);
+                m.setRole("owner");
+                teamMembershipRepository.save(m);
+            }
 
             projectRepository.findFirstByTeamId(team.getId()).orElseGet(() -> {
                 Project project = new Project();

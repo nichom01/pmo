@@ -9,6 +9,7 @@ import com.yourapp.dtos.TeamResponse;
 import com.yourapp.exceptions.NotFoundException;
 import com.yourapp.repositories.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +36,7 @@ public class OrganisationService {
         return OrganisationResponse.from(org);
     }
 
+    @Transactional(readOnly = true)
     public List<OrganisationMemberResponse> listMembers(String orgSlug) {
         Organisation org = organisationRepository.findBySlug(orgSlug)
                 .orElseThrow(() -> new NotFoundException("Organisation not found: " + orgSlug));

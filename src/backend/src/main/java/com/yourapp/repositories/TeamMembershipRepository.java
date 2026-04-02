@@ -8,5 +8,7 @@ import java.util.UUID;
 
 public interface TeamMembershipRepository extends JpaRepository<TeamMembership, UUID> {
     List<TeamMembership> findByTeamId(UUID teamId);
+
+    boolean existsByTeamIdAndUserId(UUID teamId, UUID userId);
 }
 
