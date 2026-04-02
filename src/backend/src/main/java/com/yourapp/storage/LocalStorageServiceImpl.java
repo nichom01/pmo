@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 @Service
-@Profile("dev")
+@Profile("!prod")
 public class LocalStorageServiceImpl implements StorageService {
     @Override
     public String save(String filename, byte[] content, String mimeType) {
