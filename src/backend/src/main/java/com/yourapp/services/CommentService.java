@@ -1,6 +1,7 @@
 package com.yourapp.services;
 
 import com.yourapp.dtos.CreateCommentRequest;
+import com.yourapp.dtos.UpdateCommentRequest;
 import com.yourapp.entities.Comment;
 import com.yourapp.entities.Issue;
 import com.yourapp.entities.User;
@@ -10,6 +11,7 @@ import com.yourapp.repositories.IssueRepository;
 import com.yourapp.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,5 +55,22 @@ public class CommentService {
         issueActivityService.record(issue, author, "comment_added", null, request.body());
         notificationService.create(author, author, issue, "issue_commented");
         return saved;
+    }
+
+    public Comment update(UUID commentId, UpdateCommentRequest request) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new NotFoundException("Comment not found: " + commentId));
+        comment.setBody(request.body());
+        comment.setEditedAt(OffsetDateTime.now());
+        return commentRepository.save(comment);
+    }
+
+    public Comment softDelete(UUID commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new NotFoundException("Comment not found: " + commentId));
+        comment.setBody("This comment was deleted");
+        comment.setEditedAt(OffsetDateTime.now());
+        comment.setDeletedAt(OffsetDateTime.now());
+        return commentRepository.save(comment);
     }
 }

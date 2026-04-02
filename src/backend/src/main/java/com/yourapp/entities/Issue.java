@@ -83,4 +83,6 @@ public class Issue {
     public IssuePriority getPriority() { return priority; }
     public void setPriority(IssuePriority priority) { this.priority = priority; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
+    public OffsetDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(OffsetDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

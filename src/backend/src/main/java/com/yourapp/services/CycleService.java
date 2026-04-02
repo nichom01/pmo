@@ -28,6 +28,11 @@ public class CycleService {
         return cycleRepository.findByProjectIdOrderByStartDateDesc(projectId);
     }
 
+    public Cycle get(UUID cycleId) {
+        return cycleRepository.findById(cycleId)
+                .orElseThrow(() -> new NotFoundException("Cycle not found: " + cycleId));
+    }
+
     public Cycle create(UUID projectId, CreateCycleRequest request) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new NotFoundException("Project not found: " + projectId));

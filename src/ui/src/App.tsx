@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addAttachment, addComment, assignIssueToCycle, createApiKey, createCycle, createIssue, demoContext, health, listApiKeys, listAttachments, listComments, listCycles, listIssues, listNotificationPreferences, listNotifications, upsertNotificationPreference } from "./api";
+import { addAttachment, addComment, assignIssueToCycle, createApiKey, createCycle, createIssue, createProject, demoContext, getOrganisation, health, listApiKeys, listAttachments, listComments, listCycles, listIssues, listNotificationPreferences, listNotifications, listProjects, listWorkflowStates, markAllNotificationsRead, upsertNotificationPreference, updateCycleStatus, updateIssue } from "./api";
 
 function RootPage() {
   return <Navigate to="/acme/eng/issues" replace />;
@@ -10,12 +11,33 @@ function IssuesPage() {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["health"], queryFn: health });
   const contextQuery = useQuery({ queryKey: ["demo-context"], queryFn: demoContext });
+  const [completedCycleStatus, setCompletedCycleStatus] = useState<string | null>(null);
+  const orgQuery = useQuery({
+    queryKey: ["organisation", contextQuery.data?.orgSlug],
+    queryFn: () => getOrganisation(contextQuery.data!.orgSlug),
+    enabled: !!contextQuery.data?.orgSlug
+  });
   const issuesQuery = useQuery({
     queryKey: ["issues", contextQuery.data?.projectId],
     queryFn: () => listIssues(contextQuery.data!.projectId),
     enabled: !!contextQuery.data?.projectId
   });
   const firstIssueId = issuesQuery.data?.data[0]?.id;
+  const firstIssue = issuesQuery.data?.data[0];
+  const workflowStatesQuery = useQuery({
+    queryKey: ["workflow-states", contextQuery.data?.teamId],
+    queryFn: () => listWorkflowStates(contextQuery.data!.teamId),
+    enabled: !!contextQuery.data?.teamId
+  });
+  const currentWorkflowStateName =
+    workflowStatesQuery.data?.find((s) => s.id === firstIssue?.workflowStateId)?.name ?? "";
+  const nextWorkflowStateId = (() => {
+    const states = workflowStatesQuery.data;
+    if (!states || !firstIssue) return null;
+    const idx = states.findIndex((s) => s.id === firstIssue.workflowStateId);
+    if (idx < 0) return null;
+    return states[idx + 1]?.id ?? null;
+  })();
   const cyclesQuery = useQuery({
     queryKey: ["cycles", contextQuery.data?.projectId],
     queryFn: () => listCycles(contextQuery.data!.projectId),
@@ -50,6 +72,17 @@ function IssuesPage() {
   const createCycleMutation = useMutation({
     mutationFn: async () => createCycle(contextQuery.data!.projectId, `Cycle ${Date.now()}`),
     onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["cycles", contextQuery.data?.projectId] });
+    }
+  });
+  const completeCycleMutation = useMutation({
+    mutationFn: async () => {
+      const firstCycle = cyclesQuery.data?.[0];
+      if (!firstCycle) throw new Error("Need a cycle");
+      return updateCycleStatus(firstCycle.id, "completed");
+    },
+    onSuccess: async (updatedCycle) => {
+      setCompletedCycleStatus(updatedCycle.status);
       await queryClient.invalidateQueries({ queryKey: ["cycles", contextQuery.data?.projectId] });
     }
   });
@@ -98,12 +131,39 @@ function IssuesPage() {
     }
   });
 
+  const unreadNotificationsCount = notificationsQuery.data
+    ? notificationsQuery.data.filter((n) => !n.readAt).length
+    : 0;
+
+  const markAllReadMutation = useMutation({
+    mutationFn: async () => markAllNotificationsRead(),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    }
+  });
+
+  const moveIssueToNextWorkflowStateMutation = useMutation({
+    mutationFn: async () => {
+      if (!firstIssue) throw new Error("Need issue");
+      if (!nextWorkflowStateId) throw new Error("No next workflow state");
+      return updateIssue(firstIssue.id, firstIssue.title, firstIssue.description, nextWorkflowStateId, firstIssue.priority);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["issues", contextQuery.data?.projectId] });
+    }
+  });
+
   return (
     <main style={{ fontFamily: "sans-serif", padding: 24 }}>
       <h1>Project Management UI</h1>
+      <p data-testid="org-name">Org: {orgQuery.data?.name ?? ""}</p>
       <p data-testid="health-status">
         Backend: {query.isSuccess ? query.data.status : "checking"}
       </p>
+      <p data-testid="cycle-status">
+        Cycle status: {completedCycleStatus ?? cyclesQuery.data?.[0]?.status ?? ""}
+      </p>
+      <p data-testid="workflow-state-name">Workflow: {currentWorkflowStateName}</p>
       <p data-testid="issues-count">
         Issues: {issuesQuery.data ? issuesQuery.data.data.length : 0}
       </p>
@@ -113,6 +173,7 @@ function IssuesPage() {
       <p data-testid="notifications-count">
         Notifications: {notificationsQuery.data ? notificationsQuery.data.length : 0}
       </p>
+      <p data-testid="unread-notifications-count">Unread: {unreadNotificationsCount}</p>
       <p data-testid="api-keys-count">
         API Keys: {apiKeysQuery.data ? apiKeysQuery.data.length : 0}
       </p>
@@ -124,6 +185,18 @@ function IssuesPage() {
       </button>
       <button onClick={() => createCycleMutation.mutate()} disabled={!contextQuery.data?.projectId}>
         Create Cycle
+      </button>
+      <button
+        onClick={() => completeCycleMutation.mutate()}
+        disabled={!cyclesQuery.data?.length}
+      >
+        Complete First Cycle
+      </button>
+      <button
+        onClick={() => moveIssueToNextWorkflowStateMutation.mutate()}
+        disabled={!nextWorkflowStateId}
+      >
+        Move First Issue To Next Workflow State
       </button>
       <button
         onClick={() => assignMutation.mutate()}
@@ -142,6 +215,9 @@ function IssuesPage() {
       </button>
       <button onClick={() => upsertPreferenceMutation.mutate()}>
         Upsert Notification Preference
+      </button>
+      <button onClick={() => markAllReadMutation.mutate()}>
+        Mark All Notifications Read
       </button>
       <ul>
         {issuesQuery.data?.data.map((issue) => (
@@ -168,10 +244,34 @@ function IssuesPage() {
 }
 
 function ProjectsPage() {
+  const queryClient = useQueryClient();
+  const contextQuery = useQuery({ queryKey: ["demo-context"], queryFn: demoContext });
+  const projectsQuery = useQuery({
+    queryKey: ["projects", contextQuery.data?.teamId],
+    queryFn: () => listProjects(contextQuery.data!.teamId),
+    enabled: !!contextQuery.data?.teamId
+  });
+  const createProjectMutation = useMutation({
+    mutationFn: async () => createProject(contextQuery.data!.teamId, `Project ${Date.now()}`, "Created from UI"),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["projects", contextQuery.data?.teamId] });
+    }
+  });
+
   return (
     <main style={{ fontFamily: "sans-serif", padding: 24 }}>
       <h2>Projects</h2>
-      <p>Project list placeholder wired for backend integration.</p>
+      <p data-testid="projects-count">
+        Projects: {projectsQuery.data ? projectsQuery.data.length : 0}
+      </p>
+      <button onClick={() => createProjectMutation.mutate()} disabled={!contextQuery.data?.teamId}>
+        Create Project
+      </button>
+      <ul>
+        {projectsQuery.data?.map((project) => (
+          <li key={project.id}>{project.name}</li>
+        ))}
+      </ul>
       <Link to="/acme/eng/issues">Back to issues</Link>
     </main>
   );

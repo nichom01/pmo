@@ -11,18 +11,20 @@ public class DemoDataConfig {
     @Bean
     CommandLineRunner seedDemoData(
             OrganisationRepository organisationRepository,
+            OrganisationMembershipRepository organisationMembershipRepository,
             TeamRepository teamRepository,
+            TeamMembershipRepository teamMembershipRepository,
             ProjectRepository projectRepository,
             WorkflowStateRepository workflowStateRepository,
             UserRepository userRepository
     ) {
         return args -> {
-            userRepository.findByEmail("demo@acme.dev").orElseGet(() -> {
-                User user = new User();
-                user.setEmail("demo@acme.dev");
-                user.setUsername("demo");
-                user.setPasswordHash("$2a$10$localdevlocaldevlocaldevlocaldevlocaldev");
-                return userRepository.save(user);
+            User user = userRepository.findByEmail("demo@acme.dev").orElseGet(() -> {
+                User newUser = new User();
+                newUser.setEmail("demo@acme.dev");
+                newUser.setUsername("demo");
+                newUser.setPasswordHash("$2a$10$localdevlocaldevlocaldevlocaldevlocaldev");
+                return userRepository.save(newUser);
             });
 
             Organisation org = organisationRepository.findBySlug("acme").orElseGet(() -> {
@@ -39,6 +41,31 @@ public class DemoDataConfig {
                 created.setIdentifier("eng");
                 return teamRepository.save(created);
             });
+
+            // Seed demo memberships so org/team listing endpoints return data.
+            organisationMembershipRepository.findByOrganisationId(org.getId())
+                    .stream()
+                    .filter(m -> m.getUser().getId().equals(user.getId()))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        OrganisationMembership m = new OrganisationMembership();
+                        m.setOrganisation(org);
+                        m.setUser(user);
+                        m.setRole("admin");
+                        return organisationMembershipRepository.save(m);
+                    });
+
+            teamMembershipRepository.findByTeamId(team.getId())
+                    .stream()
+                    .filter(m -> m.getUser().getId().equals(user.getId()))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        TeamMembership m = new TeamMembership();
+                        m.setTeam(team);
+                        m.setUser(user);
+                        m.setRole("owner");
+                        return teamMembershipRepository.save(m);
+                    });
 
             projectRepository.findFirstByTeamId(team.getId()).orElseGet(() -> {
                 Project project = new Project();

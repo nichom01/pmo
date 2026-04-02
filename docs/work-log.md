@@ -21,3 +21,41 @@
 - 23:26:20 BST - Extended UI with notification preference count and upsert action; expanded unit and e2e flow coverage.
 - 23:26:20 BST - Validation run complete: backend tests passed (`--max-workers=1` for stability), frontend unit tests passed, e2e passed.
 - 23:28:43 BST - Added `docs/development-workflow.md` to formally document the required delivery loop (implement -> validate -> log -> commit -> push -> continue).
+- 23:34:32 BST - Started slice: project list/create UI parity for `/acme/eng/projects` route, replacing placeholder content with live backend integration.
+- 23:34:32 BST - Implemented UI project API integration: added `listProjects` + `createProject` API client methods, wired projects route query/mutation, and rendered project count/list.
+- 23:34:32 BST - Expanded coverage for projects flow: added frontend unit test for projects route rendering and extended Playwright smoke test to navigate to projects and create a project.
+- 23:34:32 BST - Validation run complete: backend tests passed, frontend unit tests passed, and e2e passed after tightening projects heading selector to avoid strict-mode ambiguity.
+- 23:38:24 BST - Started slice: close endpoint gaps for comment and attachment lifecycle operations.
+- 23:38:24 BST - Implemented backend comment lifecycle endpoints: added `PATCH /comments/:commentId` and `DELETE /comments/:commentId` with service logic for comment edits and soft-delete redaction (`This comment was deleted`).
+- 23:38:24 BST - Implemented backend attachment deletion endpoint: added `DELETE /attachments/:attachmentId` and service deletion flow.
+- 23:38:24 BST - Expanded backend integration coverage for new lifecycle endpoints in comment + attachment integration tests.
+- 23:38:24 BST - Validation run complete: backend tests passed, frontend unit tests passed, e2e passed.
+- 09:21:55 BST - Started slice: org/team read + `users/me` profile endpoints + UI wiring.
+- 09:21:55 BST - Implemented backend entities + repos for memberships plus REST endpoints:
+  - `GET /api/v1/organisations/:orgSlug` and member/team listings
+  - `GET/PATCH /api/v1/users/me`
+- 09:21:55 BST - Seeded demo organisation/team memberships so listings return data.
+- 09:21:55 BST - Updated UI issues page to display organisation name via `GET /api/v1/organisations/:orgSlug`; updated unit test stubs and Playwright smoke assertions.
+- 09:21:55 BST - Validation run complete: backend tests passed, frontend unit tests passed, e2e passed.
+- 09:28:25 BST - Started slice: fill CRUD gaps for projects/issues/cycles endpoints.
+- 09:28:25 BST - Implemented backend endpoints:
+  - `GET/PATCH/DELETE /api/v1/projects/:projectId`
+  - `GET/PATCH/DELETE /api/v1/issues/:issueId`
+  - `GET /api/v1/cycles/:cycleId`
+  using soft-delete via `deleted_at` for Project and Issue.
+- 09:28:25 BST - Added `ProjectIssueCycleCRUDIntegrationTest` covering update + soft-delete + follow-up 404 behaviour.
+- 09:28:25 BST - Validation run complete: backend tests passed, frontend unit tests passed, e2e passed.
+- 09:33:45 BST - Started slice: enforce org/team membership-based authorization for mutations.
+- 09:33:45 BST - Updated `PermissionService` to resolve effective roles from `organisation_memberships` + `team_memberships` (demo user) and added resource-based assert methods (team/project/issue/cycle/comment/attachment).
+- 09:33:45 BST - Updated mutation controllers (projects, cycles, issues, comments, attachments) to use membership-based checks instead of relying on `X-Team-Role`.
+- 09:33:45 BST - Validation run complete: backend tests passed, frontend unit tests passed, e2e passed.
+- 09:46:29 BST - Fixed `PATCH /api/v1/cycles/:cycleId` 500s by making membership-based `PermissionService` checks transactional (lazy-loading works with `open-in-view: false`).
+- 09:46:29 BST - Made cycle completion e2e deterministic by updating UI to display the status returned from the cycle completion mutation (not just the first cycle in the list).
+- 09:46:29 BST - Re-validated: backend cycle PATCH now succeeds and Playwright smoke test passes (cycle status becomes `completed`).
+- 09:50:17 BST - Started slice: notifications UX completion (unread count + `read-all` action) in UI and Playwright smoke test.
+- 09:50:17 BST - Implemented `POST /api/v1/notifications/read-all` client + UI button (`Mark All Notifications Read`) and added `unread-notifications-count` display.
+- 09:50:17 BST - Rebuilt UI container and validated: Playwright smoke test passes with unread count asserted to reach `Unread: 0`.
+- 09:53:29 BST - Started slice: issue workflow state movement in UI + e2e coverage.
+- 09:53:29 BST - Implemented UI workflow-state query + `Move First Issue To Next Workflow State` action (calls `PATCH /api/v1/issues/:issueId`) and added `workflow-state-name` display.
+- 09:53:29 BST - Updated frontend unit test stubs for `/teams/:teamId/workflow-states` and extended Playwright smoke test to assert `Backlog -> Todo`.
+- 09:53:29 BST - Validation: frontend unit tests passed, Playwright smoke test passed.

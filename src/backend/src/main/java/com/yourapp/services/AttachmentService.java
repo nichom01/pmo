@@ -61,4 +61,10 @@ public class AttachmentService {
         issueActivityService.record(issue, uploader, "attachment_added", null, request.filename());
         return saved;
     }
+
+    public void delete(UUID attachmentId) {
+        Attachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new NotFoundException("Attachment not found: " + attachmentId));
+        attachmentRepository.delete(attachment);
+    }
 }

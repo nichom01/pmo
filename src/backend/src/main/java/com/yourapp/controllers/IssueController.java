@@ -4,6 +4,7 @@ import com.yourapp.dtos.AssignCycleRequest;
 import com.yourapp.dtos.CreateIssueRequest;
 import com.yourapp.dtos.IssueResponse;
 import com.yourapp.dtos.PaginatedResponse;
+import com.yourapp.dtos.UpdateIssueRequest;
 import com.yourapp.security.PermissionService;
 import com.yourapp.services.IssueService;
 import jakarta.validation.Valid;
@@ -37,7 +38,7 @@ public class IssueController {
             @Valid @RequestBody CreateIssueRequest request,
             @RequestHeader(name = "X-Team-Role", defaultValue = "member") String role
     ) {
-        permissionService.assertCanMutateTeamResources(role);
+        permissionService.assertCanMutateProjectResources(projectId);
         return IssueResponse.from(issueService.create(projectId, request));
     }
 
@@ -47,7 +48,31 @@ public class IssueController {
             @Valid @RequestBody AssignCycleRequest request,
             @RequestHeader(name = "X-Team-Role", defaultValue = "member") String role
     ) {
-        permissionService.assertCanMutateTeamResources(role);
+        permissionService.assertCanMutateIssueResources(issueId);
         return IssueResponse.from(issueService.assignCycle(issueId, request.cycleId()));
+    }
+
+    @GetMapping("/issues/{issueId}")
+    public IssueResponse get(@PathVariable UUID issueId) {
+        return IssueResponse.from(issueService.get(issueId));
+    }
+
+    @PatchMapping("/issues/{issueId}")
+    public IssueResponse update(
+            @PathVariable UUID issueId,
+            @Valid @RequestBody UpdateIssueRequest request,
+            @RequestHeader(name = "X-Team-Role", defaultValue = "member") String role
+    ) {
+        permissionService.assertCanMutateIssueResources(issueId);
+        return IssueResponse.from(issueService.update(issueId, request));
+    }
+
+    @DeleteMapping("/issues/{issueId}")
+    public void delete(
+            @PathVariable UUID issueId,
+            @RequestHeader(name = "X-Team-Role", defaultValue = "member") String role
+    ) {
+        permissionService.assertCanMutateIssueResources(issueId);
+        issueService.delete(issueId);
     }
 }

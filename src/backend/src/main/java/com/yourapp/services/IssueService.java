@@ -3,6 +3,7 @@ package com.yourapp.services;
 import com.yourapp.dtos.CreateIssueRequest;
 import com.yourapp.dtos.IssueResponse;
 import com.yourapp.dtos.PaginatedResponse;
+import com.yourapp.dtos.UpdateIssueRequest;
 import com.yourapp.entities.Issue;
 import com.yourapp.entities.IssuePriority;
 import com.yourapp.entities.Project;
@@ -16,6 +17,7 @@ import com.yourapp.repositories.UserRepository;
 import com.yourapp.repositories.WorkflowStateRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -120,5 +122,39 @@ public class IssueService {
         Issue saved = issueRepository.save(issue);
         issueActivityService.record(saved, issueActivityService.demoActor(), "cycle_changed", null, cycle.getId().toString());
         return saved;
+    }
+
+    public Issue get(UUID issueId) {
+        return issueRepository.findById(issueId)
+                .orElseThrow(() -> new NotFoundException("Issue not found: " + issueId));
+    }
+
+    public Issue update(UUID issueId, UpdateIssueRequest request) {
+        Issue issue = get(issueId);
+
+        WorkflowState state = workflowStateRepository.findById(request.workflowStateId())
+                .orElseThrow(() -> new NotFoundException("Workflow state not found: " + request.workflowStateId()));
+        if (!state.getTeam().getId().equals(issue.getTeam().getId())) {
+            throw new NotFoundException("Workflow state does not belong to this issue's team.");
+        }
+
+        String oldTitle = issue.getTitle();
+        issue.setTitle(request.title());
+        issue.setDescription(request.description());
+        issue.setPriority(request.priority());
+        issue.setWorkflowState(state);
+        Issue saved = issueRepository.save(issue);
+
+        if (oldTitle != null && !oldTitle.equals(saved.getTitle())) {
+            issueActivityService.record(saved, issueActivityService.demoActor(), "title_changed", oldTitle, saved.getTitle());
+        }
+
+        return saved;
+    }
+
+    public void delete(UUID issueId) {
+        Issue issue = get(issueId);
+        issue.setDeletedAt(OffsetDateTime.now());
+        issueRepository.save(issue);
     }
 }

@@ -2,6 +2,7 @@ package com.yourapp.controllers;
 
 import com.yourapp.dtos.CommentResponse;
 import com.yourapp.dtos.CreateCommentRequest;
+import com.yourapp.dtos.UpdateCommentRequest;
 import com.yourapp.security.PermissionService;
 import com.yourapp.services.CommentService;
 import jakarta.validation.Valid;
@@ -32,7 +33,26 @@ public class CommentController {
             @Valid @RequestBody CreateCommentRequest request,
             @RequestHeader(name = "X-Team-Role", defaultValue = "member") String role
     ) {
-        permissionService.assertCanMutateTeamResources(role);
+        permissionService.assertCanMutateIssueResources(issueId);
         return CommentResponse.from(commentService.create(issueId, request));
+    }
+
+    @PatchMapping("/comments/{commentId}")
+    public CommentResponse update(
+            @PathVariable UUID commentId,
+            @Valid @RequestBody UpdateCommentRequest request,
+            @RequestHeader(name = "X-Team-Role", defaultValue = "member") String role
+    ) {
+        permissionService.assertCanMutateCommentResources(commentId);
+        return CommentResponse.from(commentService.update(commentId, request));
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    public CommentResponse delete(
+            @PathVariable UUID commentId,
+            @RequestHeader(name = "X-Team-Role", defaultValue = "member") String role
+    ) {
+        permissionService.assertCanMutateCommentResources(commentId);
+        return CommentResponse.from(commentService.softDelete(commentId));
     }
 }

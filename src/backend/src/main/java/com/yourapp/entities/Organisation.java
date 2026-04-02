@@ -35,4 +35,6 @@ public class Organisation {
     public void setName(String name) { this.name = name; }
     public String getSlug() { return slug; }
     public void setSlug(String slug) { this.slug = slug; }
+    public int getIssueSequence() { return issueSequence; }
+    public void setIssueSequence(int issueSequence) { this.issueSequence = issueSequence; }
 }

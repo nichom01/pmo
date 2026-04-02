@@ -32,7 +32,16 @@ public class AttachmentController {
             @Valid @RequestBody CreateAttachmentRequest request,
             @RequestHeader(name = "X-Team-Role", defaultValue = "member") String role
     ) {
-        permissionService.assertCanMutateTeamResources(role);
+        permissionService.assertCanMutateIssueResources(issueId);
         return AttachmentResponse.from(attachmentService.create(issueId, request));
+    }
+
+    @DeleteMapping("/attachments/{attachmentId}")
+    public void delete(
+            @PathVariable UUID attachmentId,
+            @RequestHeader(name = "X-Team-Role", defaultValue = "member") String role
+    ) {
+        permissionService.assertCanMutateAttachmentResources(attachmentId);
+        attachmentService.delete(attachmentId);
     }
 }

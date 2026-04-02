@@ -33,7 +33,7 @@ public class CycleController {
             @Valid @RequestBody CreateCycleRequest request,
             @RequestHeader(name = "X-Team-Role", defaultValue = "member") String role
     ) {
-        permissionService.assertCanMutateTeamResources(role);
+        permissionService.assertCanMutateProjectResources(projectId);
         return CycleResponse.from(cycleService.create(projectId, request));
     }
 
@@ -43,7 +43,12 @@ public class CycleController {
             @Valid @RequestBody UpdateCycleRequest request,
             @RequestHeader(name = "X-Team-Role", defaultValue = "member") String role
     ) {
-        permissionService.assertCanMutateTeamResources(role);
+        permissionService.assertCanMutateCycleResources(cycleId);
         return CycleResponse.from(cycleService.update(cycleId, request));
+    }
+
+    @GetMapping("/cycles/{cycleId}")
+    public CycleResponse get(@PathVariable UUID cycleId) {
+        return CycleResponse.from(cycleService.get(cycleId));
     }
 }

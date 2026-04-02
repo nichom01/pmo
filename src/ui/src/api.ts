@@ -9,6 +9,13 @@ export type DemoContext = {
   cycleId?: string | null;
 };
 
+export type Organisation = {
+  id: string;
+  name: string;
+  slug: string;
+  issueSequence: number;
+};
+
 export type PaginatedResponse<T> = {
   data: T[];
   nextCursor: string | null;
@@ -26,6 +33,23 @@ export type Issue = {
   description: string | null;
   priority: string;
   createdAt: string;
+};
+
+export type WorkflowState = {
+  id: string;
+  teamId: string;
+  name: string;
+  color: string;
+  type: string;
+  position: number;
+};
+
+export type Project = {
+  id: string;
+  teamId: string;
+  name: string;
+  description: string | null;
+  status: string;
 };
 
 export type Cycle = {
@@ -98,6 +122,12 @@ export async function demoContext() {
   return response.json() as Promise<DemoContext>;
 }
 
+export async function getOrganisation(orgSlug: string) {
+  const response = await fetch(`${API_BASE_URL}/organisations/${orgSlug}`);
+  if (!response.ok) throw new Error("Failed to load organisation");
+  return response.json() as Promise<Organisation>;
+}
+
 export async function listIssues(projectId: string, cursor?: string) {
   const params = new URLSearchParams({ limit: "25" });
   if (cursor) params.set("cursor", cursor);
@@ -106,6 +136,26 @@ export async function listIssues(projectId: string, cursor?: string) {
     throw new Error("Failed to load issues");
   }
   return response.json() as Promise<PaginatedResponse<Issue>>;
+}
+
+export async function listProjects(teamId: string) {
+  const response = await fetch(`${API_BASE_URL}/teams/${teamId}/projects`);
+  if (!response.ok) {
+    throw new Error("Failed to load projects");
+  }
+  return response.json() as Promise<Project[]>;
+}
+
+export async function createProject(teamId: string, name: string, description?: string) {
+  const response = await fetch(`${API_BASE_URL}/teams/${teamId}/projects`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Team-Role": "member" },
+    body: JSON.stringify({ name, description })
+  });
+  if (!response.ok) {
+    throw new Error("Failed to create project");
+  }
+  return response.json() as Promise<Project>;
 }
 
 export async function createIssue(projectId: string, workflowStateId: string, title: string) {
@@ -129,6 +179,12 @@ export async function listCycles(projectId: string) {
   return response.json() as Promise<Cycle[]>;
 }
 
+export async function listWorkflowStates(teamId: string) {
+  const response = await fetch(`${API_BASE_URL}/teams/${teamId}/workflow-states`);
+  if (!response.ok) throw new Error("Failed to load workflow states");
+  return response.json() as Promise<WorkflowState[]>;
+}
+
 export async function createCycle(projectId: string, name: string) {
   const today = new Date();
   const start = today.toISOString().slice(0, 10);
@@ -139,6 +195,32 @@ export async function createCycle(projectId: string, name: string) {
     body: JSON.stringify({ name, startDate: start, endDate })
   });
   if (!response.ok) throw new Error("Failed to create cycle");
+  return response.json() as Promise<Cycle>;
+}
+
+export async function updateIssue(
+  issueId: string,
+  title: string,
+  description: string | null,
+  workflowStateId: string,
+  priority: string
+) {
+  const response = await fetch(`${API_BASE_URL}/issues/${issueId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", "X-Team-Role": "member" },
+    body: JSON.stringify({ title, description, workflowStateId, priority })
+  });
+  if (!response.ok) throw new Error("Failed to update issue");
+  return response.json() as Promise<Issue>;
+}
+
+export async function updateCycleStatus(cycleId: string, status: Cycle["status"]) {
+  const response = await fetch(`${API_BASE_URL}/cycles/${cycleId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", "X-Team-Role": "member" },
+    body: JSON.stringify({ status })
+  });
+  if (!response.ok) throw new Error("Failed to update cycle status");
   return response.json() as Promise<Cycle>;
 }
 
@@ -172,6 +254,15 @@ export async function listNotifications() {
   const response = await fetch(`${API_BASE_URL}/notifications`);
   if (!response.ok) throw new Error("Failed to load notifications");
   return response.json() as Promise<Notification[]>;
+}
+
+export async function markAllNotificationsRead() {
+  const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" }
+  });
+  if (!response.ok) throw new Error("Failed to mark notifications as read");
+  return response.json() as Promise<{ updated: number }>;
 }
 
 export async function listAttachments(issueId: string) {

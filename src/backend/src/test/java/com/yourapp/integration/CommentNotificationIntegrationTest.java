@@ -58,6 +58,35 @@ class CommentNotificationIntegrationTest {
                 new ParameterizedTypeReference<>() {}
         );
         assertThat(commentCreate.getStatusCode()).isEqualTo(HttpStatus.OK);
+        String commentId = String.valueOf(commentCreate.getBody().get("id"));
+
+        ResponseEntity<Map<String, Object>> commentUpdate = restTemplate.exchange(
+                "/api/v1/comments/" + commentId,
+                HttpMethod.PATCH,
+                new HttpEntity<>(Map.of("body", "updated"), headers),
+                new ParameterizedTypeReference<>() {}
+        );
+        assertThat(commentUpdate.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(commentUpdate.getBody().get("body")).isEqualTo("updated");
+
+        ResponseEntity<Map<String, Object>> commentDelete = restTemplate.exchange(
+                "/api/v1/comments/" + commentId,
+                HttpMethod.DELETE,
+                new HttpEntity<>(headers),
+                new ParameterizedTypeReference<>() {}
+        );
+        assertThat(commentDelete.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(commentDelete.getBody().get("body")).isEqualTo("This comment was deleted");
+
+        ResponseEntity<List<Map<String, Object>>> comments = restTemplate.exchange(
+                "/api/v1/issues/" + issueId + "/comments",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {}
+        );
+        assertThat(comments.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(comments.getBody()).isNotEmpty();
+        assertThat(comments.getBody().get(0).get("body")).isEqualTo("This comment was deleted");
 
         ResponseEntity<List<Map<String, Object>>> notifications = restTemplate.exchange(
                 "/api/v1/notifications",

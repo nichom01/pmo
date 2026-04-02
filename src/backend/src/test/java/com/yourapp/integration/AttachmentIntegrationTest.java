@@ -52,6 +52,7 @@ class AttachmentIntegrationTest {
                 new ParameterizedTypeReference<Map<String, Object>>() {}
         );
         assertThat(created.getStatusCode()).isEqualTo(HttpStatus.OK);
+        String attachmentId = String.valueOf(created.getBody().get("id"));
 
         ResponseEntity<List<Map<String, Object>>> listed = restTemplate.exchange(
                 "/api/v1/issues/" + issueId + "/attachments",
@@ -61,5 +62,22 @@ class AttachmentIntegrationTest {
         );
         assertThat(listed.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(listed.getBody()).isNotEmpty();
+
+        ResponseEntity<Void> deleted = restTemplate.exchange(
+                "/api/v1/attachments/" + attachmentId,
+                HttpMethod.DELETE,
+                new HttpEntity<>(headers),
+                Void.class
+        );
+        assertThat(deleted.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<List<Map<String, Object>>> listedAfterDelete = restTemplate.exchange(
+                "/api/v1/issues/" + issueId + "/attachments",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+        );
+        assertThat(listedAfterDelete.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(listedAfterDelete.getBody()).isEmpty();
     }
 }

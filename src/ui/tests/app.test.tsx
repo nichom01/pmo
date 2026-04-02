@@ -22,6 +22,12 @@ vi.stubGlobal(
         })
       };
     }
+    if (url.includes("/organisations/acme")) {
+      return {
+        ok: true,
+        json: async () => ({ id: "org-1", name: "Acme", slug: "acme", issueSequence: 0 })
+      };
+    }
     if (url.includes("/projects/project-1/issues")) {
       return {
         ok: true,
@@ -36,6 +42,21 @@ vi.stubGlobal(
       return {
         ok: true,
         json: async () => [{ id: "c1", projectId: "project-1", name: "Cycle 1", description: null, status: "draft", startDate: "2026-01-01", endDate: "2026-01-08" }]
+      };
+    }
+    if (url.includes("/teams/team-1/workflow-states")) {
+      return {
+        ok: true,
+        json: async () => [
+          { id: "wf-1", teamId: "team-1", name: "Backlog", color: "#9ca3af", type: "backlog", position: 0 },
+          { id: "wf-2", teamId: "team-1", name: "Todo", color: "#60a5fa", type: "unstarted", position: 1 }
+        ]
+      };
+    }
+    if (url.includes("/teams/team-1/projects")) {
+      return {
+        ok: true,
+        json: async () => [{ id: "p1", teamId: "team-1", name: "Project One", description: "demo", status: "active" }]
       };
     }
     if (url.includes("/issues/i1/comments")) {
@@ -84,6 +105,10 @@ describe("App", () => {
     );
 
     expect(await screen.findByText("Project Management UI")).toBeTruthy();
+    const orgName = await screen.findByTestId("org-name");
+    await waitFor(() => {
+      expect(orgName.textContent).toContain("Org: Acme");
+    });
     const count = await screen.findByTestId("issues-count");
     await waitFor(() => {
       expect(count.textContent).toContain("Issues: 1");
@@ -104,5 +129,23 @@ describe("App", () => {
     await waitFor(() => {
       expect(prefs.textContent).toContain("Notification Prefs: 1");
     });
+  });
+
+  it("renders projects page route", async () => {
+    const client = new QueryClient();
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={["/acme/eng/projects"]}>
+          <App />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText("Projects")).toBeTruthy();
+    const count = await screen.findByTestId("projects-count");
+    await waitFor(() => {
+      expect(count.textContent).toContain("Projects: 1");
+    });
+    expect(await screen.findByText("Project One")).toBeTruthy();
   });
 });

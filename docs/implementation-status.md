@@ -22,6 +22,15 @@
   - soft-delete filtering on Project (`@SQLRestriction`)
   - demo bootstrap/context endpoints for local UI wiring (`/api/v1/demo/context`)
 - React UI scaffold with router, TanStack Query, Zustand store, and API wiring
+- Projects route wired to backend list/create endpoints (no placeholder page)
+- Comment lifecycle endpoints include list/create/update/delete support
+- Attachment lifecycle endpoints include list/create/delete support
+- Organisation/team read endpoints implemented (incl. org members + team listing) and `users/me` profile endpoints added
+- Added `GET/PATCH/DELETE` for `projects/:projectId` and `issues/:issueId`, plus `GET /cycles/:cycleId` detail
+- Mutation authorization for these resources now resolves effective roles from seeded organisation/team memberships
+- Cycle completion is now exercised end-to-end in the UI + Playwright smoke test
+- Notifications UX now includes unread count + mark-all-read action (UI + Playwright smoke test)
+- Issue workflow movement is now covered in UI + Playwright smoke test (Backlog -> Todo)
 - Unit/integration/e2e test foundations:
   - backend unit + Testcontainers integration tests
   - frontend Vitest tests

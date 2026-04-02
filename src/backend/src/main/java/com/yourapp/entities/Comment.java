@@ -1,7 +1,6 @@
 package com.yourapp.entities;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.OffsetDateTime;
@@ -9,7 +8,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "comments")
-@SQLRestriction("deleted_at IS NULL")
 public class Comment {
     @Id
     @GeneratedValue
@@ -43,5 +41,9 @@ public class Comment {
     public void setAuthor(User author) { this.author = author; }
     public String getBody() { return body; }
     public void setBody(String body) { this.body = body; }
+    public OffsetDateTime getEditedAt() { return editedAt; }
+    public void setEditedAt(OffsetDateTime editedAt) { this.editedAt = editedAt; }
+    public OffsetDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(OffsetDateTime deletedAt) { this.deletedAt = deletedAt; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
 }
